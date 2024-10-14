@@ -9,7 +9,7 @@ on:
     inputs:
       runManual:
         description: 'Run the workflow manually'
-        required: true
+        required: false
 
 jobs:
   build:

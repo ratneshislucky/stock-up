@@ -145,7 +145,7 @@ func main() {
 	}
 
 	if allNegative {
-		message := fmt.Sprintf("INVEST!! INVEST!! INVEST!!\nAll negatives!! from: %s to: %s\n%s", startDate, endDate, strings.Join(messages, "\n"))
+		message := fmt.Sprintf("Indices are negative, from: %s to: %s\n%s", startDate, endDate, strings.Join(messages, "\n"))
 		fmt.Println(message)
 		sendTelegramNotification(message, botToken, chatID)
 	} else {
