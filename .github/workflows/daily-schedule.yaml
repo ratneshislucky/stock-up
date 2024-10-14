@@ -1,4 +1,4 @@
-name: Run Go Moving Average Crossover Script
+name: Nifty indices schedule
 
 on:
   schedule:
