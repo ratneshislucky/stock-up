@@ -1,0 +1,35 @@
+name: Run Go Moving Average Crossover Script
+
+on:
+  schedule:
+    # This cron syntax means every day at 2 PM UTC (Coordinated Universal Time)
+    - cron: '30 8 * * *'
+
+  workflow_dispatch: # Allows manual trigger of the workflow from GitHub interface
+    inputs:
+      runManual:
+        description: 'Run the workflow manually'
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Checkout the repository
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    # Step 2: Set up Go environment
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.23.2'  # Use appropriate Go version for your project
+
+    # Step 3: Install any required Go modules (if you use any)
+    - name: Get dependencies
+      run: go mod tidy  # Only required if your project has external dependencies
+
+    # Step 4: Run your Go script
+    - name: Run Go Script
+      run: go run MarketFall.go

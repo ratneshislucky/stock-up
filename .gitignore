@@ -1,0 +1,17 @@
+# Binaries for programs and plugins
+*.exe
+*.dll
+*.so
+*.dylib
+*.bin
+
+# Test binary, coverage files
+*.test
+*.out
+
+# Go workspace file
+go.work
+go.work.sum
+
+# IDE specific
+.vscode/
