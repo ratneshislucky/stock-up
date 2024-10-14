@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-// Define structures for the requests and slack payloads
+// Define structures for the requests
 
 type IndexRequest struct {
 	Name      string `json:"name"`
