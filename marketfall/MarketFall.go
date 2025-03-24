@@ -1,9 +1,10 @@
-package main
+package marketfall
 
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"go-stock/config"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -27,11 +28,17 @@ func getDates() (string, string) {
 }
 
 // Function to send Telegram notification
-func sendTelegramNotification(message string, botToken string, chatID string) {
-	url := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", botToken)
+func sendTelegramNotification(message string) {
+	cfg := config.GetConfig()
+	if cfg.TelegramBotToken == "" || cfg.TelegramChatID == "" {
+		fmt.Println("Warning: Telegram credentials not set")
+		return
+	}
+
+	url := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", cfg.TelegramBotToken)
 
 	payload := map[string]string{
-		"chat_id": chatID,
+		"chat_id": cfg.TelegramChatID,
 		"text":    message,
 	}
 
@@ -94,7 +101,8 @@ func fetchIndexData(index IndexRequest) (string, error) {
 	return strings.TrimSpace(output), nil
 }
 
-func main() {
+// RunMarketFallCheck executes the market fall check
+func RunMarketFallCheck() {
 	// Define the start and end dates
 	startDate, endDate := getDates()
 
@@ -106,10 +114,6 @@ func main() {
 		{Name: "Nifty500 Momentum 50", StartDate: startDate, EndDate: endDate},
 		{Name: "Nifty Midcap150 Momentum 50", StartDate: startDate, EndDate: endDate},
 	}
-
-	// Telegram bot token and chat ID
-	botToken := "7541372157:AAFxgVbgOVH2uk04yMD0dR78rwVYnTgKo6c"
-	chatID := "754100903"
 
 	var returns []float64
 	var messages []string
@@ -147,10 +151,10 @@ func main() {
 	if allNegative {
 		message := fmt.Sprintf("Indices are negative, from: %s to: %s\n%s", startDate, endDate, strings.Join(messages, "\n"))
 		fmt.Println(message)
-		sendTelegramNotification(message, botToken, chatID)
+		sendTelegramNotification(message)
 	} else {
 		fmt.Println("Not all returns are negative.")
 		message := "Stock Update : Not a big gap"
-		sendTelegramNotification(message, botToken, chatID)
+		sendTelegramNotification(message)
 	}
 }
