@@ -6,25 +6,32 @@ on:
   
   # Scheduled trigger: Run daily at 4:30 PM IST (11:00 AM UTC)
   schedule:
-    - cron: '15 9 * * *'  # Runs at 9:15 AM IST
+    - cron: '0 11 * * *'  # 11:00 AM UTC = 4:30 PM IST
 
 jobs:
-  analyze-stocks:
+  run-analysis:
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v2
-      
-      - name: Set up Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: '1.21'
-          
-      - name: Build
-        run: go build -o go-stock
-        
-      - name: Run Stock Analysis
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_IDS: ${{ secrets.TELEGRAM_CHAT_IDS }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: ./go-stock
+    - uses: actions/checkout@v3
+    
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+    
+    - name: Install dependencies
+      run: go mod tidy
+    
+    - name: Run Stock Analysis
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      run: go run main.go stock
+    
+    - name: Run Market Fall Check
+      env:
+        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      run: go run main.go marketfall
