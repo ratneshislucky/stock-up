@@ -8,7 +8,7 @@ import (
 // Config holds all configuration values
 type Config struct {
 	TelegramBotToken string
-	TelegramChatIDs  []string // Changed from single ChatID to array of ChatIDs
+	TelegramChatIDs  []string
 	GeminiAPIKey     string
 	StockList        string
 }
@@ -32,26 +32,28 @@ const (
 func GetConfig() *Config {
 	// Ensure Telegram credentials are properly formatted
 	botToken := os.Getenv("TELEGRAM_BOT_TOKEN")
-	chatIDs := os.Getenv("TELEGRAM_CHAT_IDS")
+	chatIDsStr := os.Getenv("TELEGRAM_CHAT_IDS")
 
 	// Remove any whitespace from credentials
 	if botToken != "" {
 		botToken = strings.TrimSpace(botToken)
 	}
 
-	// Split chat IDs by comma and trim whitespace
-	var chatIDList []string
-	if chatIDs != "" {
-		chatIDs = strings.TrimSpace(chatIDs)
-		chatIDList = strings.Split(chatIDs, ",")
-		for i, id := range chatIDList {
-			chatIDList[i] = strings.TrimSpace(id)
+	// Split and clean chat IDs
+	var chatIDs []string
+	if chatIDsStr != "" {
+		chatIDsStr = strings.TrimSpace(chatIDsStr)
+		rawChatIDs := strings.Split(chatIDsStr, ",")
+		for _, id := range rawChatIDs {
+			if trimmedID := strings.TrimSpace(id); trimmedID != "" {
+				chatIDs = append(chatIDs, trimmedID)
+			}
 		}
 	}
 
 	return &Config{
 		TelegramBotToken: botToken,
-		TelegramChatIDs:  chatIDList,
+		TelegramChatIDs:  chatIDs,
 		GeminiAPIKey:     os.Getenv("GEMINI_API_KEY"),
 		StockList:        getStockList(),
 	}

@@ -39,22 +39,12 @@ func sendTelegramNotification(message string) {
 
 	// Send to each chat ID
 	for _, chatID := range cfg.TelegramChatIDs {
-		chatID = strings.TrimSpace(chatID)
-		if chatID == "" {
-			continue
+		payload := map[string]string{
+			"chat_id": chatID,
+			"text":    message,
 		}
 
-		payload := map[string]interface{}{
-			"chat_id":    chatID,
-			"text":       message,
-			"parse_mode": "MarkdownV2",
-		}
-
-		payloadBytes, err := json.Marshal(payload)
-		if err != nil {
-			fmt.Printf("Error marshaling payload for chat %s: %v\n", chatID, err)
-			continue
-		}
+		payloadBytes, _ := json.Marshal(payload)
 
 		resp, err := http.Post(url, "application/json", bytes.NewBuffer(payloadBytes))
 		if err != nil {
@@ -66,9 +56,7 @@ func sendTelegramNotification(message string) {
 		if resp.StatusCode == http.StatusOK {
 			fmt.Printf("Notification sent successfully to chat %s!\n", chatID)
 		} else {
-			body, _ := ioutil.ReadAll(resp.Body)
-			fmt.Printf("Failed to send notification to chat %s. Status code: %d, Response: %s\n",
-				chatID, resp.StatusCode, string(body))
+			fmt.Printf("Failed to send notification to chat %s. Status code: %d\n", chatID, resp.StatusCode)
 		}
 	}
 }
@@ -169,7 +157,7 @@ func RunMarketFallCheck() {
 		sendTelegramNotification(message)
 	} else {
 		fmt.Println("Not all returns are negative.")
-		message := "Update : Not a big gap in mutual funds"
+		message := "Mutual Funds : Not a big gap"
 		sendTelegramNotification(message)
 	}
 }
