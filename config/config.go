@@ -8,7 +8,7 @@ import (
 // Config holds all configuration values
 type Config struct {
 	TelegramBotToken string
-	TelegramChatID   string
+	TelegramChatIDs  []string // Changed from single ChatID to array of ChatIDs
 	GeminiAPIKey     string
 	StockList        string
 }
@@ -32,19 +32,26 @@ const (
 func GetConfig() *Config {
 	// Ensure Telegram credentials are properly formatted
 	botToken := os.Getenv("TELEGRAM_BOT_TOKEN")
-	chatID := os.Getenv("TELEGRAM_CHAT_ID")
+	chatIDs := os.Getenv("TELEGRAM_CHAT_IDS")
 
 	// Remove any whitespace from credentials
 	if botToken != "" {
 		botToken = strings.TrimSpace(botToken)
 	}
-	if chatID != "" {
-		chatID = strings.TrimSpace(chatID)
+
+	// Split chat IDs by comma and trim whitespace
+	var chatIDList []string
+	if chatIDs != "" {
+		chatIDs = strings.TrimSpace(chatIDs)
+		chatIDList = strings.Split(chatIDs, ",")
+		for i, id := range chatIDList {
+			chatIDList[i] = strings.TrimSpace(id)
+		}
 	}
 
 	return &Config{
 		TelegramBotToken: botToken,
-		TelegramChatID:   chatID,
+		TelegramChatIDs:  chatIDList,
 		GeminiAPIKey:     os.Getenv("GEMINI_API_KEY"),
 		StockList:        getStockList(),
 	}
@@ -56,4 +63,13 @@ func getStockList() string {
 		return stockList
 	}
 	return DefaultStockList
+}
+
+// getEnvVar retrieves an environment variable and ensures it's not empty
+func getEnvVar(key string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		panic("Environment variable " + key + " is not set")
+	}
+	return value
 }

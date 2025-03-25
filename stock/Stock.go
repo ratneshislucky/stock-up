@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -74,30 +75,66 @@ type GeminiResponse struct {
 // Send Telegram notification with improved formatting
 func sendStockTelegramNotification(message string) {
 	cfg := config.GetConfig()
-	if cfg.TelegramBotToken == "" || cfg.TelegramChatID == "" {
+	if cfg.TelegramBotToken == "" || len(cfg.TelegramChatIDs) == 0 {
 		fmt.Println("Warning: Telegram credentials not set")
 		return
 	}
 
+	// Escape special characters in the message
+	message = strings.ReplaceAll(message, "_", "\\_")
+	message = strings.ReplaceAll(message, "*", "\\*")
+	message = strings.ReplaceAll(message, "[", "\\[")
+	message = strings.ReplaceAll(message, "]", "\\]")
+	message = strings.ReplaceAll(message, "(", "\\(")
+	message = strings.ReplaceAll(message, ")", "\\)")
+	message = strings.ReplaceAll(message, "~", "\\~")
+	message = strings.ReplaceAll(message, "`", "\\`")
+	message = strings.ReplaceAll(message, ">", "\\>")
+	message = strings.ReplaceAll(message, "#", "\\#")
+	message = strings.ReplaceAll(message, "+", "\\+")
+	message = strings.ReplaceAll(message, "-", "\\-")
+	message = strings.ReplaceAll(message, "=", "\\=")
+	message = strings.ReplaceAll(message, "|", "\\|")
+	message = strings.ReplaceAll(message, "{", "\\{")
+	message = strings.ReplaceAll(message, "}", "\\}")
+	message = strings.ReplaceAll(message, ".", "\\.")
+	message = strings.ReplaceAll(message, "!", "\\!")
+
 	url := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", cfg.TelegramBotToken)
-	payload := map[string]string{
-		"chat_id":    cfg.TelegramChatID,
-		"text":       message,
-		"parse_mode": "Markdown", // Enable Markdown formatting
-	}
 
-	payloadBytes, _ := json.Marshal(payload)
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(payloadBytes))
-	if err != nil {
-		fmt.Printf("Error sending Telegram notification: %v\n", err)
-		return
-	}
-	defer resp.Body.Close()
+	// Send to each chat ID
+	for _, chatID := range cfg.TelegramChatIDs {
+		chatID = strings.TrimSpace(chatID)
+		if chatID == "" {
+			continue
+		}
 
-	if resp.StatusCode == http.StatusOK {
-		fmt.Println("Notification sent successfully!")
-	} else {
-		fmt.Printf("Failed to send notification. Status code: %d\n", resp)
+		payload := map[string]interface{}{
+			"chat_id":    chatID,
+			"text":       message,
+			"parse_mode": "MarkdownV2",
+		}
+
+		payloadBytes, err := json.Marshal(payload)
+		if err != nil {
+			fmt.Printf("Error marshaling payload for chat %s: %v\n", chatID, err)
+			continue
+		}
+
+		resp, err := http.Post(url, "application/json", bytes.NewBuffer(payloadBytes))
+		if err != nil {
+			fmt.Printf("Error sending Telegram notification to chat %s: %v\n", chatID, err)
+			continue
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode == http.StatusOK {
+			fmt.Printf("Notification sent successfully to chat %s!\n", chatID)
+		} else {
+			body, _ := io.ReadAll(resp.Body)
+			fmt.Printf("Failed to send notification to chat %s. Status code: %d, Response: %s\n",
+				chatID, resp.StatusCode, string(body))
+		}
 	}
 }
 
@@ -546,7 +583,7 @@ func processStockGroup(groupName string, stocks []string) {
 			groupMessage := message + strings.Join(messages, "\n---\n")
 			fmt.Println(groupMessage)
 
-			if cfg.TelegramBotToken != "" && cfg.TelegramChatID != "" {
+			if cfg.TelegramBotToken != "" && len(cfg.TelegramChatIDs) > 0 {
 				sendStockTelegramNotification(groupMessage)
 			}
 		}
