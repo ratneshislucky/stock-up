@@ -30,31 +30,46 @@ func getDates() (string, string) {
 // Function to send Telegram notification
 func sendTelegramNotification(message string) {
 	cfg := config.GetConfig()
-	if cfg.TelegramBotToken == "" || cfg.TelegramChatID == "" {
+	if cfg.TelegramBotToken == "" || len(cfg.TelegramChatIDs) == 0 {
 		fmt.Println("Warning: Telegram credentials not set")
 		return
 	}
 
 	url := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", cfg.TelegramBotToken)
 
-	payload := map[string]string{
-		"chat_id": cfg.TelegramChatID,
-		"text":    message,
-	}
+	// Send to each chat ID
+	for _, chatID := range cfg.TelegramChatIDs {
+		chatID = strings.TrimSpace(chatID)
+		if chatID == "" {
+			continue
+		}
 
-	payloadBytes, _ := json.Marshal(payload)
+		payload := map[string]interface{}{
+			"chat_id":    chatID,
+			"text":       message,
+			"parse_mode": "MarkdownV2",
+		}
 
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(payloadBytes))
-	if err != nil {
-		fmt.Println("Error sending Telegram notification:", err)
-		return
-	}
-	defer resp.Body.Close()
+		payloadBytes, err := json.Marshal(payload)
+		if err != nil {
+			fmt.Printf("Error marshaling payload for chat %s: %v\n", chatID, err)
+			continue
+		}
 
-	if resp.StatusCode == http.StatusOK {
-		fmt.Println("Notification sent successfully!")
-	} else {
-		fmt.Printf("Failed to send notification. Status code: %d\n", resp.StatusCode)
+		resp, err := http.Post(url, "application/json", bytes.NewBuffer(payloadBytes))
+		if err != nil {
+			fmt.Printf("Error sending Telegram notification to chat %s: %v\n", chatID, err)
+			continue
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode == http.StatusOK {
+			fmt.Printf("Notification sent successfully to chat %s!\n", chatID)
+		} else {
+			body, _ := ioutil.ReadAll(resp.Body)
+			fmt.Printf("Failed to send notification to chat %s. Status code: %d, Response: %s\n",
+				chatID, resp.StatusCode, string(body))
+		}
 	}
 }
 
@@ -154,7 +169,7 @@ func RunMarketFallCheck() {
 		sendTelegramNotification(message)
 	} else {
 		fmt.Println("Not all returns are negative.")
-		message := "Stock Update : Not a big gap"
+		message := "Update : Not a big gap in mutual funds"
 		sendTelegramNotification(message)
 	}
 }

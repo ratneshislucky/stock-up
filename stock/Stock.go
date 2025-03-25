@@ -80,26 +80,6 @@ func sendStockTelegramNotification(message string) {
 		return
 	}
 
-	// Escape special characters in the message
-	message = strings.ReplaceAll(message, "_", "\\_")
-	message = strings.ReplaceAll(message, "*", "\\*")
-	message = strings.ReplaceAll(message, "[", "\\[")
-	message = strings.ReplaceAll(message, "]", "\\]")
-	message = strings.ReplaceAll(message, "(", "\\(")
-	message = strings.ReplaceAll(message, ")", "\\)")
-	message = strings.ReplaceAll(message, "~", "\\~")
-	message = strings.ReplaceAll(message, "`", "\\`")
-	message = strings.ReplaceAll(message, ">", "\\>")
-	message = strings.ReplaceAll(message, "#", "\\#")
-	message = strings.ReplaceAll(message, "+", "\\+")
-	message = strings.ReplaceAll(message, "-", "\\-")
-	message = strings.ReplaceAll(message, "=", "\\=")
-	message = strings.ReplaceAll(message, "|", "\\|")
-	message = strings.ReplaceAll(message, "{", "\\{")
-	message = strings.ReplaceAll(message, "}", "\\}")
-	message = strings.ReplaceAll(message, ".", "\\.")
-	message = strings.ReplaceAll(message, "!", "\\!")
-
 	url := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", cfg.TelegramBotToken)
 
 	// Send to each chat ID
